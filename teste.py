@@ -1,24 +1,11 @@
-__all__ = ['SimpleDoc']
+__all__ = ['PyWeb']
 
 import re
 
 class DocError(Exception):
     pass
 
-class SimpleDoc(object):
-
-    """
-    class generating xml/html documents using context managers
-
-    doc, tag, text = SimpleDoc().tagtext()
-
-    with tag('html'):
-        with tag('body', id = 'hello'):
-            with tag('h1'):
-                text('Hello world!')
-
-    print(doc.getvalue())
-    """
+class PyWeb(object):
 
     class Tag(object):
         def __init__(self, doc, name, attrs): # name is the tag name (ex: 'div')
@@ -36,13 +23,13 @@ class SimpleDoc(object):
         def __exit__(self, tpe, value, traceback):
             if value is None:
                 if self.attrs:
-                    self.doc.result[self.position] = "<%s %s>" % (
+                    self.doc.result[self.position] = "\n<%s %s>\n" % (
                         self.name,
                         dict_to_attrs(self.attrs),
                     )
                 else:
                     self.doc.result[self.position] = "<%s>" % self.name
-                self.doc._append("</%s>" % self.name)
+                self.doc._append("\n</%s>" % self.name)
                 self.doc.current_tag = self.parent_tag
 
     class DocumentRoot(object):
@@ -55,32 +42,11 @@ class SimpleDoc(object):
             pass
 
         def __getattr__(self, item):
-            raise SimpleDoc.DocumentRoot.DocumentRootError("DocumentRoot here. You can't access anything here.")
+            raise PyWeb.DocumentRoot.DocumentRootError("DocumentRoot here. You can't access anything here.")
 
     _newline_rgx = re.compile(r'\r?\n')
 
     def __init__(self, stag_end = ' />', nl2br = False):
-        r"""
-            stag_end:
-                the string terminating self closing tags.
-                This determines what tags produced using the `stag` method will look like.
-                For example, if you set `stag_end='>'`, then `doc.stag('hr')` will
-                produce a `<hr>` tag.
-                If you set `stag_end=' />'` (the default), then `doc.stag('hr')` would
-                instead produce a `<hr />` tag.
-                If you set `nl2br=True`, then the `text` method will also
-                produce `<br>` or `<br />` tags according to this preference when encountering
-                new lines.
-                Defaults to ' />'.
-
-            nl2br:
-                if set to True, the `text` method will turn new lines
-                ('\n' or '\r\n' sequences) in the input to `<br />` html tags,
-                or possibly to `<br>` tags if using the `stag_end` parameter to this effect.
-                (see explanations about `stag_end` above).
-                Defaults to False (new lines are not replaced).
-
-        """
         self.result = []
         self.current_tag = self.__class__.DocumentRoot()
         self._append = self.result.append
@@ -89,77 +55,13 @@ class SimpleDoc(object):
         self._br = '<br' + stag_end
         self._nl2br = nl2br
 
+	#aqui entra a tag
     def tag(self, tag_name, *args, **kwargs):
-        """
-        opens a HTML/XML tag for use inside a `with` statement
-        the tag is closed when leaving the `with` block
-        HTML/XML attributes can be supplied as keyword arguments,
-        or alternatively as (key, value) pairs.
-        The values of the keyword arguments should be strings.
-        They are escaped for use as HTML attributes
-        (the " character is replaced with &quot;)
 
-        In order to supply a "class" html attributes, you must supply a `klass` keyword
-        argument. This is because `class` is a reserved python keyword so you can't use it
-        outside of a class definition.
-
-        Example::
-
-            with tag('h1', id = 'main-title'):
-                text("Hello world!")
-
-            # <h1 id="main-title">Hello world!</h1> was appended to the document
-
-            with tag('td',
-                ('data-search', 'lemon'),
-                ('data-order', '1384'),
-                id = '16'
-            ):
-                text('Citrus Limon')
-
-            # you get: <td data-search="lemon" data-order="1384" id="16">Citrus Limon</td>
-
-        """
         return self.__class__.Tag(self, tag_name, _attributes(args, kwargs))
 
 
     def text(self, *strgs):
-        r"""
-        appends 0 or more strings to the document
-        the strings are escaped for use as text in html documents, that is,
-        & becomes &amp;
-        < becomes &lt;
-        > becomes &gt;
-
-        Example::
-
-            username = 'Max'
-            text('Hello ', username, '!') # appends "Hello Max!" to the current node
-            text('16 > 4') # appends "16 &gt; 4" to the current node
-
-        New lines ('\n' or '\r\n' sequences) are left intact, unless you have set the
-        nl2br option to True when creating the SimpleDoc instance. Then they would be
-        replaced with `<br />` tags (or `<br>` tags if using the `stag_end` option
-        of the SimpleDoc constructor as shown in the example below).
-
-        Example::
-
-            >>> doc = SimpleDoc()
-            >>> doc.text('pistachio\nice cream')
-            >>> doc.getvalue()
-            'pistachio\nice cream'
-
-            >>> doc = SimpleDoc(nl2br=True)
-            >>> doc.text('pistachio\nice cream')
-            >>> doc.getvalue()
-            'pistachio<br />ice cream'
-
-            >>> doc = SimpleDoc(nl2br=True, stag_end='>')
-            >>> doc.text('pistachio\nice cream')
-            >>> doc.getvalue()
-            'pistachio<br>ice cream'
-
-        """
         for strg in strgs:
             transformed_string = html_escape(strg)
             if self._nl2br:
@@ -173,47 +75,10 @@ class SimpleDoc(object):
                 self._append(transformed_string)
 
     def line(self, tag_name, text_content, *args, **kwargs):
-        """
-        Shortcut to write tag nodes that contain only text.
-        For example, in order to obtain::
-
-            <h1>The 7 secrets of catchy titles</h1>
-
-        you would write::
-
-            line('h1', 'The 7 secrets of catchy titles')
-
-        which is just a shortcut for::
-
-            with tag('h1'):
-                text('The 7 secrets of catchy titles')
-
-        The first argument is the tag name, the second argument
-        is the text content of the node.
-        The optional arguments after that are interpreted as xml/html
-        attributes. in the same way as with the `tag` method.
-
-        Example::
-
-            line('a', 'Who are we?', href = '/about-us.html')
-
-        produces::
-
-            <a href="/about-us.html">Who are we?</a>
-        """
         with self.tag(tag_name, *args, **kwargs):
             self.text(text_content)
 
     def asis(self, *strgs):
-        """
-        appends 0 or more strings to the documents
-        contrary to the `text` method, the strings are appended "as is"
-        &, < and > are NOT escaped
-
-        Example::
-
-            doc.asis('<!DOCTYPE html>') # appends <!DOCTYPE html> to the document
-        """
         for strg in strgs:
             if strg is None:
                 raise TypeError("Expected a string, got None instead.")
@@ -225,102 +90,15 @@ class SimpleDoc(object):
         self._append('\n')
 
     def attr(self, *args, **kwargs):
-        """
-        sets HTML/XML attribute(s) on the current tag
-        HTML/XML attributes are supplied as (key, value) pairs of strings,
-        or as keyword arguments.
-        The values of the keyword arguments should be strings.
-        They are escaped for use as HTML attributes
-        (the " character is replaced with &quot;)
-        Note that, instead, you can set html/xml attributes by passing them as
-        keyword arguments to the `tag` method.
-
-        In order to supply a "class" html attributes, you can either pass
-        a ('class', 'my_value') pair, or supply a `klass` keyword argument
-        (this is because `class` is a reserved python keyword so you can't use it
-        outside of a class definition).
-
-        Examples::
-
-            with tag('h1'):
-                text('Welcome!')
-                doc.attr(id = 'welcome-message', klass = 'main-title')
-
-            # you get: <h1 id="welcome-message" class="main-title">Welcome!</h1>
-
-            with tag('td'):
-                text('Citrus Limon')
-                doc.attr(
-                    ('data-search', 'lemon'),
-                    ('data-order', '1384')
-                )
-
-
-            # you get: <td data-search="lemon" data-order="1384">Citrus Limon</td>
-
-        """
         self.current_tag.attrs.update(_attributes(args, kwargs))
 
     def data(self, *args, **kwargs):
-        """
-        sets HTML/XML data attribute(s) on the current tag
-        HTML/XML data attributes are supplied as (key, value) pairs of strings,
-        or as keyword arguments.
-        The values of the keyword arguments should be strings.
-        They are escaped for use as HTML attributes
-        (the " character is replaced with &quot;)
-        Note that, instead, you can set html/xml data attributes by passing them as
-        keyword arguments to the `tag` method.
-
-        Examples::
-
-            with tag('h1'):
-                text('Welcome!')
-                doc.data(msg='welcome-message')
-
-            # you get: <h1 data-msg="welcome-message">Welcome!</h1>
-
-            with tag('td'):
-                text('Citrus Limon')
-                doc.data(
-                    ('search', 'lemon'),
-                    ('order', '1384')
-                )
-
-
-            # you get: <td data-search="lemon" data-order="1384">Citrus Limon</td>
-
-        """
         self.attr(
             *(('data-%s' % key, value) for (key, value) in args),
             **dict(('data-%s' % key, value) for (key, value) in kwargs.items())
         )
 
     def stag(self, tag_name, *args, **kwargs):
-        """
-        appends a self closing tag to the document
-        html/xml attributes can be supplied as keyword arguments,
-        or alternatively as (key, value) pairs.
-        The values of the keyword arguments should be strings.
-        They are escaped for use as HTML attributes
-        (the " character is replaced with &quot;)
-
-        Example::
-
-            doc.stag('img', src = '/salmon-plays-piano.jpg')
-            # appends <img src="/salmon-plays-piano.jpg" /> to the document
-
-        If you want to produce self closing tags without the ending slash (HTML5 style),
-        use the stag_end parameter of the SimpleDoc constructor at the creation of the
-        SimpleDoc instance.
-
-        Example::
-
-            >>> doc = SimpleDoc(stag_end = '>')
-            >>> doc.stag('br')
-            >>> doc.getvalue()
-            '<br>'
-        """
         if args or kwargs:
             self._append("<%s %s%s" % (
                 tag_name,
@@ -331,15 +109,6 @@ class SimpleDoc(object):
             self._append("<%s%s" % (tag_name, self._stag_end))
 
     def cdata(self, strg, safe = False):
-        """
-        appends a CDATA section containing the supplied string
-
-        You don't have to worry about potential ']]>' sequences that would terminate
-        the CDATA section. They are replaced with ']]]]><![CDATA[>'.
-
-        If you're sure your string does not contain ']]>', you can pass `safe = True`.
-        If you do that, your string won't be searched for ']]>' sequences.
-        """
         self._append('<![CDATA[')
         if safe:
             self._append(strg)
@@ -348,84 +117,25 @@ class SimpleDoc(object):
         self._append(']]>')
 
     def getvalue(self):
-        """
-        returns the whole document as a single string
-        """
         return ''.join(self.result)
 
     def tagtext(self):
-        """
-        return a triplet composed of::
-            . the document itself
-            . its tag method
-            . its text method
-
-        Example::
-
-            doc, tag, text = SimpleDoc().tagtext()
-
-            with tag('h1'):
-                text('Hello world!')
-
-            print(doc.getvalue()) # prints <h1>Hello world!</h1>
-        """
-
         return self, self.tag, self.text
 
     def ttl(self):
-        """
-        returns a quadruplet composed of::
-            . the document itself
-            . its tag method
-            . its text method
-            . its line method
-
-        Example::
-
-            doc, tag, text, line = SimpleDoc().ttl()
-
-            with tag('ul', id='grocery-list'):
-                line('li', 'Tomato sauce', klass="priority")
-                line('li', 'Salt')
-                line('li', 'Pepper')
-
-            print(doc.getvalue())
-        """
         return self, self.tag, self.text, self.line
 
     def add_class(self, *classes):
-        """
-        adds one or many elements to the html "class" attribute of the current tag
-        Example::
-            user_logged_in = False
-            with tag('a', href="/nuclear-device", klass = 'small'):
-                if not user_logged_in:
-                    doc.add_class('restricted-area')
-                text("Our new product")
-
-            print(doc.getvalue())
-
-            # prints <a class="restricted-area small" href="/nuclear-device"></a>
-        """
         self._set_classes(
             self._get_classes().union(classes)
         )
 
     def discard_class(self, *classes):
-        """
-        remove one or many elements from the html "class" attribute of the current
-        tag if they are present (do nothing if they are absent)
-        """
         self._set_classes(
             self._get_classes().difference(classes)
         )
 
     def toggle_class(self, elem, active):
-        """
-        if active is a truthy value, ensure elem is present inside the html
-        "class" attribute of the current tag, otherwise (if active is falsy)
-        ensure elem is absent
-        """
         classes = self._get_classes()
         if active:
             classes.add(elem)
@@ -450,6 +160,7 @@ class SimpleDoc(object):
                 del self.current_tag.attrs['class']
             except KeyError:
                 pass
+
 
 def html_escape(s):
     if isinstance(s,(int,float)):
@@ -504,11 +215,12 @@ def _attributes(args, kwargs):
     return result
 
 
-doc, tag, text = SimpleDoc().tagtext()
+doc, tag, text = PyWeb().tagtext()
 
 with tag('html'):
     with tag('body', id = 'hello'):
         with tag('h1'):
-            text('Hello world!')
+            text('O primeiro teste')
 
-print(doc.getvalue())
+generate()
+
