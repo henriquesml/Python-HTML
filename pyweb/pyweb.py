@@ -37,8 +37,11 @@ class PyWeb(object):
     def text(self, *strgs):
         print(strgs)
 
-    def tagtext(self):
+    def Content(self):
         return self, self.tag, self.text
 
-
+    def Generate(self):
+        global document
+        for i in document:
+            print(i)
 
