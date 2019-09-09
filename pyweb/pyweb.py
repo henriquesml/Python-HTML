@@ -5,18 +5,14 @@ class PyWeb(object):
 
         global document
         document = []
-        global x
-        x = 0
 
         def __init__(self, doc, name):
 
-            self.doc = doc
             self.name = name
-
 
         def __enter__(self):
             global document
-            document.append('<'+self.name+'>')
+            document.append(self.name)
             print(document)
 
             global x
@@ -26,7 +22,7 @@ class PyWeb(object):
 
             global x
 
-            document.append('<'+document[x-1]+'/>')
+            document.append(document[x-1])
             print(document)
 
             x -= 1
