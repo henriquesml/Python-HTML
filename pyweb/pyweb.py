@@ -1,5 +1,5 @@
 class PyWeb(object):
-    
+
     # Grava a TAG
     class Tag(object):
 
@@ -11,23 +11,10 @@ class PyWeb(object):
             self.name = name
 
         def __enter__(self):
-            global document
-            document.append(self.name)
-            print(document)
-
-            global x
-            x = len(document)
+            document.append('<'+self.name+'>')
 
         def __exit__(self, tpe, value, traceback):
-
-            global x
-
-            document.append(document[x-1])
-            print(document)
-
-            x -= 1
-        
-
+            document.append('</'+self.name+'>')
 	#aqui entra a tag
     def tag(self, tag_name, *args, **kwargs):
 
@@ -42,6 +29,7 @@ class PyWeb(object):
 
     def Generate(self):
         global document
+        print(document)
         for i in document:
             print(i)
 
