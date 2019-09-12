@@ -7,18 +7,15 @@ class PyWeb(object):
         global n
         n = 4
 
-        def __init__(self, doc, name, *text):
+        def __init__(self, doc, name):
 
             self.name = name
-            self.text = text
 
         def __enter__(self):
             global n
             if self.name != 'html' and self.name  != '':
                 document.append(' '*n+'<'+self.name+'>')
                 n += 4
-                if self.text != '':
-                    document.append(self.text)
             else:
                 document.append('<'+self.name+'>')
 
@@ -35,8 +32,9 @@ class PyWeb(object):
         return self.__class__.Tag(self, tag_name)
 
     def text(self, strgs):
-
-        return self.__class__.Tag(self,'',strgs)
+        global document
+        global n
+        document.append(' '*n+strgs)
 
     def Content(self):
         return self, self.tag, self.text
@@ -47,5 +45,3 @@ class PyWeb(object):
 
         for i in document:
             print(i)
-
-
