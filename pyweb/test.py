@@ -1,6 +1,6 @@
 from pyweb import *
 
-doc, tag, text, button = PyWeb().Content()
+tag, text, button = PyWeb().Content()
 
 texto = ('''
     style="color: red;

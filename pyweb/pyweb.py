@@ -58,4 +58,4 @@ class PyWeb(object):
         return self.__class__.Tag(self, '', '',' '*n+strgs)
 
     def Content(self):
-        return self, self.tag, self.text , self.button
+        return self.tag, self.text , self.button
