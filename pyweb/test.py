@@ -1,6 +1,6 @@
 from pyweb import *
 
-doc, tag, text = PyWeb().Content()
+doc, tag, text, button = PyWeb().Content()
 
 texto = ('''
     style="color: red;
@@ -11,3 +11,5 @@ with tag('html'):
         text('Olá Mundo')
     with tag('h2', texto):
         text('Olá Mundo')
+    with button():
+        text('botão')

@@ -48,10 +48,14 @@ class PyWeb(object):
 
         return self.__class__.Tag(self, tag_name, newstyle)
 
+    def button(self, *strgs):
+ 
+        return self.__class__.Tag(self, 'button','')
+
     def text(self, strgs):
         global n
 
         return self.__class__.Tag(self, '', '',' '*n+strgs)
 
     def Content(self):
-        return self, self.tag, self.text  
+        return self, self.tag, self.text , self.button
