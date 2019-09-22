@@ -2,10 +2,11 @@ from pyweb import *
 
 doc, tag, text = PyWeb().Content()
 
-with tag('html'):
-    with tag('h1'):
-        text('Olá Mundo')
-        with tag('h2'):
-        	text('Olá Mundo')
+texto = ('style="color: blue"')
 
-PyWeb().Generate()
+with tag('html'):
+    with tag('h1', texto):
+        text('Olá Mundo')
+    with tag('h2'):
+        text('Olá Mundo')
+
