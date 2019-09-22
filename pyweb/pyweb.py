@@ -2,8 +2,7 @@ class PyWeb(object):
 
     # Grava a TAG
     class Tag(object):
-        global document
-        document = []
+
         global n
         n = 4
         global page
@@ -15,6 +14,7 @@ class PyWeb(object):
             self.style = style
             self.text = text
 
+            # Se for informado texto
             if text != ():
                 page.write(text[0]+'\n')
 
@@ -22,18 +22,18 @@ class PyWeb(object):
             global n
             global page
 
+            # Grava a abertura da tag
             if self.name != 'html' and self.name  != '':
                 page.write(' '*n+'<'+self.name+self.style+'>\n')
                 n += 4
-
             else:
                  page.write('<'+self.name+'>\n')
             
-
         def __exit__(self, tpe, value, traceback):
             global n
             global page
 
+            # Grava o fechamento da tag
             if self.name != 'html':
                 n -= 4
                 page.write(' '*n+'</'+self.name+'>\n')
@@ -49,10 +49,9 @@ class PyWeb(object):
         return self.__class__.Tag(self, tag_name, newstyle)
 
     def text(self, strgs):
-        global document
         global n
 
         return self.__class__.Tag(self, '', '',' '*n+strgs)
 
     def Content(self):
-        return self, self.tag, self.text
+        return self, self.tag, self.text  
